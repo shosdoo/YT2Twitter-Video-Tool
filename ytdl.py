@@ -1,64 +1,78 @@
-import os
 import subprocess
-from colorama import init, Fore
+import os
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
+from colorama import init, Fore
 
 init()
-GREEN = "\033[92m"
-BLUE = "\033[94m"
-CYAN = "\033[96m"
-MAGENTA = "\033[95m"
-YELLOW = "\033[93m"
-RESET = "\033[0m"
-ROSA = "\033[91m\033[97m"
 
+def recortar(archivo):
+    start_time = 0
+    end_time = 120
+    sub_clip = f"2{archivo}"
+    ffmpeg_extract_subclip(archivo, start_time, end_time, targetname=sub_clip)
+    return sub_clip
 
-
-url_video = input(f"{Fore.GREEN}Ingresa la url del video:{Fore.RESET} ")
-if url_video.startswith("https://youtu.be"):
-    mp3_video = input(f"{Fore.GREEN}Quieres convertirlo en formato mp3? Y/N:{Fore.RESET} ")
-    if mp3_video == "N":    
-        def_name = "video.webm"
-        name_sinformat = input(f"{Fore.BLUE}Ingresa un nombre para el video:{Fore.RESET} ")
-        video_recor = input(f"{Fore.BLUE}Quieres recortar el video?(si/no):{Fore.RESET} ")
-        
-        start_time = 0
-        end_time = 125
-        name_format = f"{name_sinformat}.mp4"
-
-        download_video = f"yt-dlp -o {def_name} {url_video}"
-        result = subprocess.run(download_video, shell=True, stdout=subprocess.PIPE)
-        salida = result.stdout
-
-        convert = f"ffmpeg -i {def_name} {name_format}"
-        rere = subprocess.run(convert, shell=True, stdout=subprocess.PIPE)
-        sli = rere.stdout
-        os.remove(def_name)        
-        if video_recor == "si":
-            
-            name_video_noformat = f"2{name_format}"        
-        
-            ffmpeg_extract_subclip(name_format, start_time, end_time, targetname=name_video_noformat)        
-            os.remove(name_format)
-            name_video_recor = name_video_noformat.lstrip('0123456789')
-            os.rename(name_video_noformat, name_video_recor)
-            print(f"{Fore.BLUE}Se descargo el video:{Fore.RESET} {Fore.GREEN}{name_video_recor}{Fore.RESET}")
-        elif video_recor == "no":
-            print(f"{Fore.BLUE}Se descargo el video:{Fore.RESET} {Fore.GREEN}{name_format}{Fore.RESET}")    
+def descarga(url, name):
+    def_name = 'video.webm'
+    comando = f'yt-dlp -o {def_name} {url}'
+    result = subprocess.run(comando, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    salida = result.stdout
     
-    elif mp3_video == "Y":
-        unamemp3 = "music.webm"
-        name_mp3_nof = input(f"{Fore.GREEN}Ingresa el nombre de la cancion:{Fore.RESET} ")
-        name_mp3for = f"{name_mp3_nof}.mp3"
+    comando2 = f'ffmpeg -i {def_name} {name}.mp4'
+    result2 = subprocess.run(comando2, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    salida2 = result2.stdout
+    os.remove(def_name)
+    if result.returncode == 0 and result2.returncode == 0:        
+        rec_video = input(f"{Fore.WHITE}Deseas recortar el video?(S/N):{Fore.RESET}")
+        if rec_video.upper() == "S":
+            recortar(f"{name}.mp4")
+            sub_clip = recortar(f"{name}.mp4")
+            name_rec = f"{name}.mp4"
+            os.rename(sub_clip, name_rec)
+            print(f"{Fore.GREEN}Se descargo {name_rec}{Fore.RESET}")
+        elif rec_video.upper() == "N":
+            sub_clip = recortar(f"{name}.mp4")
+            name_rec = f"{name}.mp4"
+            os.rename(sub_clip, name_rec)
+            print(f"{Fore.GREEN}Se descargo {name_rec}{Fore.RESET}")
         
-        downmp3 = f"yt-dlp -o {unamemp3} {url_video}"
-        resmp3 = subprocess.run(downmp3, shell=True)
+    return
+
+def descarga_mp3(url_mp3,name_mp3):
+    def_mp3name = 'music.webm'
+    comando = f"yt-dlp -o {def_mp3name} {url_mp3}"
+    result = subprocess.run(comando, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+    salida = result.stdout
+    
+    comando2 = f'ffmpeg -i {def_mp3name} {name_mp3}.mp3'
+    result2 = subprocess.run(comando2, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+    salida2 = result2.stdout
+    os.remove(def_mp3name)
+    if result.returncode == 0 and result2.returncode == 0:        
+        print(f"{Fore.GREEN}Se descargo correctamente {name_mp3}{Fore.RESET}")
+    
+    else:
+        print(f"{Fore.RED}Hubo un error en la descarga{Fore.RESET}")
+    return        
+
+
+
+opcion = input(f"{Fore.WHITE}Ingresa la opcion que quieres:\n{Fore.WHITE}[1]{Fore.RESET} {Fore.RED}Formato mp4{Fore.RESET}\n{Fore.WHITE}[2]{Fore.RESET} {Fore.RED}Formato mp3\n:{Fore.RESET}")
+if opcion == "1":
+    url = input(f"{Fore.WHITE}Ingresa la url:{Fore.RESET} ")
+    if url.startswith("https://youtu.be"):
+        name = input(f"{Fore.WHITE}Ingresa el nombre:{Fore.RESET} ")
+        down = descarga(url, name)
         
-        conmp3 = f"ffmpeg -i {unamemp3} {name_mp3for}"
-        remp3 = subprocess.run(conmp3, shell=True)
-        os.remove(unamemp3)                    
-        print(f"{Fore.GREEN}Se descargo el archivo {name_mp3for}{Fore.RESET}")                                
+    else:
+        print(f"{Fore.RED}Url no valida{Fore.RESET}")
+        
+elif opcion == "2":
+    url_mp3 = input(f"{Fore.WHITE}Ingresa la url:{Fore.RESET} ")
+    if url_mp3.startswith("https://youtu.be"):        
+        name_mp3 = input(f"{Fore.WHITE}Ingresa el nombre:{Fore.RESET} ")
+        down2 = descarga_mp3(url_mp3, name_mp3)
+    else:
+        print(f"{Fore.RED}La Url no es valida{Fore.RESET}")
 else:
-    print(f"{Fore.BLUE}No es url valida{Fore.RESET}")
-
-
+    print(f"{Fore.RED}La opcion no es valida{Fore.RESET}")
